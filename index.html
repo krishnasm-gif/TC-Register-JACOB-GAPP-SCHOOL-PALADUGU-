@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Admission & Withdrawal Register - Z.P.P.S.</title>
+    <!-- SheetJS library for parsing Excel files directly without errors -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #800000;
+            --primary-hover: #5a0000;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --border-color: #34495e;
+            --focus-ring: #0066cc;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        /* Password Protection / Creation Modal */
+        #authOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .auth-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            width: 350px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .auth-card h3 { color: var(--primary); margin-top: 0; }
+        .auth-card input { width: 100%; padding: 10px; margin: 15px 0; font-size: 16px; box-sizing: border-box; border: 2px solid #cbd5e1; border-radius: 6px; }
+        .auth-card button { width: 100%; padding: 10px; font-size: 16px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; }
+        .auth-card button:hover { background: var(--primary-hover); }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        header {
+            text-align: center;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        header h1 {
+            color: var(--primary);
+            margin: 0 0 5px 0;
+            font-size: 28px;
+            letter-spacing: 0.5px;
+        }
+        header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #555;
+            font-weight: 600;
+        }
+        /* Toolbar Controls */
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 18px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 2px solid #cbd5e1;
+        }
+        .toolbar-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        input[type="text"], select, input[type="number"], input[type="password"] {
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: #fff;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        input:focus, select:focus, button:focus {
+            outline: 3px solid var(--focus-ring);
+            outline-offset: 2px;
+            border-color: var(--focus-ring);
+        }
+        select {
+            min-width: 200px;
+            font-weight: 600;
+        }
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 11px 16px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+        button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .btn-secondary { background-color: #495057; }
+        .btn-secondary:hover { background-color: #343a40; }
+        .btn-success { background-color: #28a745; }
+        .btn-success:hover { background-color: #218838; }
+        .btn-info { background-color: #17a2b8; }
+        .btn-info:hover { background-color: #138496; }
+        .btn-warning { background-color: #d97706; color: white; }
+        .btn-warning:hover { background-color: #b45309; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        .btn-danger:hover { background-color: #bd2130; }
+        .btn-add-item { background-color: #6366f1; color: white; padding: 11px 12px; font-size: 14px; }
+        .btn-add-item:hover { background-color: #4f46e5; }
+
+        /* Photo & Media Section */
+        .profile-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: #fafafa;
+            border: 2px solid #94a3b8;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+        .photo-preview {
+            width: 120px;
+            height: 150px;
+            border: 2px dashed #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            overflow: hidden;
+            border-radius: 6px;
+            position: relative;
+        }
+        .photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Certificates Section */
+        .certificates-section {
+            background: #fafafa;
+            border: 2px solid #94a3b8;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            grid-column: span 2;
+        }
+        .cert-card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .cert-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            padding: 10px 15px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+        }
+
+        /* Form Grid Layout */
+        .grid-form {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+        }
+        .form-group {
+            background: #fafafa;
+            border: 2px solid #94a3b8;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .form-group:focus-within {
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(128,0,0,0.15);
+        }
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+        .form-row-inline {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .form-row-inline input, .form-row-inline select {
+            flex: 1;
+        }
+        .form-group label {
+            display: block;
+            font-size: 15px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .col-badge {
+            background: var(--primary);
+            color: white;
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            margin-right: 6px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            box-sizing: border-box;
+            background: #fff;
+            font-size: 16px;
+        }
+        /* Footer Action Bar */
+        .action-footer {
+            margin-top: 30px;
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-msg {
+            font-size: 16px;
+            font-weight: bold;
+            color: #28a745;
+        }
+        @media(max-width: 768px) {
+            .grid-form { grid-template-columns: 1fr; }
+            .form-group.full-width { grid-column: span 1; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Password Protection / Creation Modal -->
+<div id="authOverlay">
+    <div class="auth-card">
+        <h3 id="authModalTitle">🔒 Register Locked</h3>
+        <p id="authModalDesc">Please enter your access password:</p>
+        <input type="password" id="loginPasswordInput" placeholder="Enter password">
+        <button id="authModalBtn" onclick="handleAuthAction()">Unlock Register</button>
+    </div>
+</div>
+
+<main class="container" role="main">
+    <header>
+        <h1>REGISTER OF ADMISSIONS AND WITHDRAWALS</h1>
+        <h2>ప్రవేశ-వదిలిక పుస్తకము (Z.P.P.S. — 2013-2014)</h2>
+    </header>
+
+    <!-- Navigation & Management Toolbar -->
+    <section class="toolbar" aria-label="Control Toolbar">
+        <div class="toolbar-group">
+            <button type="button" onclick="prevStudent()" aria-label="Previous Student">◀ Back</button>
+            
+            <select id="studentSelect" onchange="loadStudentData()" aria-label="Select student from dropdown">
+                <option value="">-- Choose Register No. & Name --</option>
+            </select>
+            <!-- Delete Button right beside the dropdown -->
+            <button type="button" class="btn-danger" onclick="deleteCurrentStudent()" title="Delete Selected Student">🗑 Delete Student</button>
+
+            <button type="button" onclick="nextStudent()" aria-label="Next Student">Next ▶</button>
+        </div>
+
+        <div class="toolbar-group">
+            <input type="text" id="searchInput" placeholder="Search name or ID..." onkeyup="filterStudents()" aria-label="Search students">
+            <button type="button" class="btn-success" onclick="addNewStudent()">+ New Student</button>
+        </div>
+
+        <div class="toolbar-group">
+            <button type="button" class="btn-warning" onclick="promptChangePassword()" title="Change File Password">🔑 Change Password</button>
+            <button type="button" class="btn-info" onclick="exportExcel()" title="Download CSV">Excel</button>
+            <button type="button" class="btn-secondary" onclick="exportPDF()" title="Print or Save as PDF">PDF</button>
+            <button type="button" class="btn-warning" onclick="backupData()" title="Backup Database JSON">💾 Backup</button>
+            <input type="file" id="importJsonFile" style="display:none" accept=".json" onchange="importData(event)">
+            <button type="button" class="btn-info" onclick="document.getElementById('importJsonFile').click()" title="Restore JSON">📥 Restore</button>
+        </div>
+    </section>
+
+    <!-- Complete Form with Field-Specific Save Buttons and Dropdowns -->
+    <form id="studentForm" onsubmit="saveStudentData(event)">
+        
+        <!-- Student Photo Upload Section -->
+        <div class="profile-section">
+            <div class="photo-preview" id="photoPreviewContainer">
+                <span style="font-size: 12px; color: #666; text-align: center;">No Photo</span>
+            </div>
+            <div style="flex: 1;">
+                <label style="font-weight: 700; margin-bottom: 8px; display: block;">Student Passport Photo (విద్యార్థి ఫోటో)</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="file" id="photoUploadInput" accept="image/*" onchange="handlePhotoUpload(event)">
+                    <button type="button" class="btn-danger" onclick="deleteStudentPhoto()">Delete Photo</button>
+                    <button type="button" class="btn-success" onclick="savePhotoField()">Save Photo</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-form">
+            <div class="form-group">
+                <label for="f1"><span class="col-badge">Col 1</span> Register Number (సరుకు సంఖ్య)</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f1" required>
+                    <button type="button" onclick="saveSingleField('f1', 0)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f2"><span class="col-badge">Col 2</span> Full Name of Pupil (విద్యార్థి పూర్తి పేరు)</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f2" required>
+                    <button type="button" onclick="saveSingleField('f2', 1)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f3"><span class="col-badge">Col 3</span> Mother Tongue (తల్లిదండ్రుల భాష)</label>
+                <div class="form-row-inline">
+                    <select id="f3">
+                        <option value="">-- Select Mother Tongue --</option>
+                        <option value="Telugu">Telugu</option>
+                        <option value="Urdu">Urdu</option>
+                        <option value="Hindi">Hindi</option>
+                        <option value="English">English</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <button type="button" class="btn-add-item" onclick="addNewDropdownOption('f3')" title="Add option">+</button>
+                    <button type="button" onclick="saveSingleField('f3', 2)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f4"><span class="col-badge">Col 4</span> Date of Birth (పుట్టిన తేది)</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f4" placeholder="DD-MM-YYYY">
+                    <button type="button" onclick="saveSingleField('f4', 3)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f5"><span class="col-badge">Col 5</span> Nationality & State (జాతీయత, రాష్ట్రము)</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f5">
+                    <button type="button" onclick="saveSingleField('f5', 4)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f6"><span class="col-badge">Col 6</span> Religion (మతము)</label>
+                <div class="form-row-inline">
+                    <select id="f6">
+                        <option value="">-- Select Religion --</option>
+                        <option value="Hindu">Hindu</option>
+                        <option value="Muslim">Muslim</option>
+                        <option value="Christian">Christian</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <button type="button" class="btn-add-item" onclick="addNewDropdownOption('f6')" title="Add option">+</button>
+                    <button type="button" onclick="saveSingleField('f6', 5)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f7"><span class="col-badge">Col 7</span> Caste or Class (కులము లేదా వర్గము)</label>
+                <div class="form-row-inline">
+                    <select id="f7">
+                        <option value="">-- Select Caste Category --</option>
+                        <option value="SC">SC</option>
+                        <option value="ST">ST</option>
+                        <option value="BC-A">BC-A</option>
+                        <option value="BC-B">BC-B</option>
+                        <option value="BC-C">BC-C</option>
+                        <option value="BC-D">BC-D</option>
+                        <option value="BC-E">BC-E</option>
+                        <option value="OC">OC</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <button type="button" class="btn-add-item" onclick="addNewDropdownOption('f7')" title="Add option">+</button>
+                    <button type="button" onclick="saveSingleField('f7', 6)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f8"><span class="col-badge">Col 8</span> Father's Name (తండ్రి పేరు)</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f8">
+                    <button type="button" onclick="saveSingleField('f8', 7)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f9"><span class="col-badge">Col 9</span> Mother's Name (తల్లి పేరు)</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f9">
+                    <button type="button" onclick="saveSingleField('f9', 8)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f10"><span class="col-badge">Col 10</span> Guardian's Name (సంరక్షకుని పేరు)</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f10">
+                    <button type="button" onclick="saveSingleField('f10', 9)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f11"><span class="col-badge">Col 11</span> Residence (నివాసము)</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f11">
+                    <button type="button" onclick="saveSingleField('f11', 10)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f12"><span class="col-badge">Col 12</span> Occupation of Parent/Guardian (వృత్తి)</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f12">
+                    <button type="button" onclick="saveSingleField('f12', 11)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f13"><span class="col-badge">Col 13</span> Previous School & Class (ఏ పాఠశాల / తరగతి నుండి)</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f13">
+                    <button type="button" onclick="saveSingleField('f13', 12)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f14"><span class="col-badge">Col 14</span> Date of Admission (ప్రవేశ తేది)</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f14" placeholder="DD-MM-YYYY">
+                    <button type="button" onclick="saveSingleField('f14', 13)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f15"><span class="col-badge">Col 15</span> Class Admitted (చేరిన తరగతి)</label>
+                <div class="form-row-inline">
+                    <select id="f15">
+                        <option value="">-- Select Class --</option>
+                        <option value="LKG">LKG</option>
+                        <option value="UKG">UKG</option>
+                        <option value="I">I</option>
+                        <option value="II">II</option>
+                        <option value="III">III</option>
+                        <option value="IV">IV</option>
+                        <option value="V">V</option>
+                        <option value="VI">VI</option>
+                        <option value="VII">VII</option>
+                        <option value="VIII">VIII</option>
+                    </select>
+                    <button type="button" class="btn-add-item" onclick="addNewDropdownOption('f15')" title="Add option">+</button>
+                    <button type="button" onclick="saveSingleField('f15', 14)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f16"><span class="col-badge">Col 16</span> Vaccinated (1,2) (మశూచి వేయించుకొనినది)</label>
+                <div class="form-row-inline">
+                    <select id="f16">
+                        <option value="">-- Select Option --</option>
+                        <option value="Yes">Yes</option>
+                        <option value="NO">No</option>
+                    </select>
+                    <button type="button" class="btn-add-item" onclick="addNewDropdownOption('f16')" title="Add option">+</button>
+                    <button type="button" onclick="saveSingleField('f16', 15)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f17"><span class="col-badge">Col 17</span> Immunity Certificate (ధ్రువపత్రము చూపినది లేనిది)</label>
+                <div class="form-row-inline">
+                    <select id="f17">
+                        <option value="">-- Select Option --</option>
+                        <option value="Yes">Yes</option>
+                        <option value="NO">No</option>
+                    </select>
+                    <button type="button" class="btn-add-item" onclick="addNewDropdownOption('f17')" title="Add option">+</button>
+                    <button type="button" onclick="saveSingleField('f17', 16)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f18"><span class="col-badge">Col 18</span> H.M. Inspection Date</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f18">
+                    <button type="button" onclick="saveSingleField('f18', 17)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f19"><span class="col-badge">Col 19</span> H.M. Signature</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f19">
+                    <button type="button" onclick="saveSingleField('f19', 18)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f20"><span class="col-badge">Col 20</span> Marks of Identification (పుట్టిన గుర్తులు)</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f20">
+                    <button type="button" onclick="saveSingleField('f20', 19)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f21"><span class="col-badge">Col 21</span> Medium / Class</label>
+                <div class="form-row-inline">
+                    <select id="f21">
+                        <option value="">-- Select Medium --</option>
+                        <option value="EM">English Medium (EM)</option>
+                        <option value="TM">Telugu Medium (TM)</option>
+                        <option value="UM">Urdu Medium (UM)</option>
+                    </select>
+                    <button type="button" class="btn-add-item" onclick="addNewDropdownOption('f21')" title="Add option">+</button>
+                    <button type="button" onclick="saveSingleField('f21', 20)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f22"><span class="col-badge">Col 22</span> DOB in Words</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f22">
+                    <button type="button" onclick="saveSingleField('f22', 21)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f23"><span class="col-badge">Col 23</span> Progress in Studies</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f23">
+                    <button type="button" onclick="saveSingleField('f23', 22)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f24"><span class="col-badge">Col 24</span> Conduct</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f24">
+                    <button type="button" onclick="saveSingleField('f24', 23)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f25"><span class="col-badge">Col 25</span> Date of Leaving</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f25">
+                    <button type="button" onclick="saveSingleField('f25', 24)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="f26"><span class="col-badge">Col 26</span> Class on Leaving</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f26">
+                    <button type="button" onclick="saveSingleField('f26', 25)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group full-width">
+                <label for="f27"><span class="col-badge">Col 27</span> Reason for Leaving</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f27">
+                    <button type="button" onclick="saveSingleField('f27', 26)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group full-width">
+                <label for="f28"><span class="col-badge">Col 28</span> H.M. Initial</label>
+                <div class="form-row-inline">
+                    <input type="text" id="f28">
+                    <button type="button" onclick="saveSingleField('f28', 27)" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <!-- Scanned Certificates & Documents Section -->
+            <div class="certificates-section">
+                <label style="font-size: 16px; font-weight: 700; color: var(--primary);">📜 Scanned Certificates & Records (ధ్రువపత్రాలు)</label>
+                <p style="font-size: 13px; color: #555; margin-top: 5px;">Upload scanned certificates (Transfer Certificate, Birth Certificate, Aadhaar Card copy, etc.). They will be stored inside this file's data storage.</p>
+                
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+                    <input type="text" id="certTitle" placeholder="Certificate Name (e.g., Birth Certificate)" style="flex: 2; min-width: 200px;">
+                    <input type="file" id="certFileInput" accept="image/*,.pdf" style="flex: 2; min-width: 200px;">
+                    <button type="button" class="btn-success" onclick="addCertificate()">Upload & Save Certificate</button>
+                </div>
+
+                <div class="cert-card-list" id="certListContainer">
+                    <!-- Rendered dynamically -->
+                </div>
+            </div>
+
+            <!-- Additional Fee Management & Status Fields -->
+            <div class="form-group">
+                <label for="totalFee">Total Fee (మొత్తం ఫీజు)</label>
+                <div class="form-row-inline">
+                    <input type="number" id="totalFee" placeholder="Enter Total Fee" oninput="calculateBalance()">
+                    <button type="button" onclick="saveFeeField('totalFee')" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="feeDue">Fee Due (బకాయి ఫీజు)</label>
+                <div class="form-row-inline">
+                    <input type="number" id="feeDue" placeholder="Enter Fee Due">
+                    <button type="button" onclick="saveFeeField('feeDue')" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="feePaid">Total Fee Paid (చెల్లించిన మొత్తం ఫీజు)</label>
+                <div class="form-row-inline">
+                    <input type="number" id="feePaid" placeholder="Enter Paid Fee" oninput="calculateBalance()">
+                    <button type="button" onclick="saveFeeField('feePaid')" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="balanceToBePaid">Balance to be Paid (చెల్లించవలసిన మిగులు)</label>
+                <div class="form-row-inline">
+                    <input type="text" id="balanceToBePaid" placeholder="Auto-calculated Balance" readonly>
+                    <button type="button" onclick="saveFeeField('balanceToBePaid')" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group full-width">
+                <label for="feeClearedStatus">Fee Cleared Status (ఫీజు క్లియర్ అయిందా లేదా)</label>
+                <div class="form-row-inline">
+                    <select id="feeClearedStatus">
+                        <option value="">-- Select Status --</option>
+                        <option value="Cleared">Fee Cleared (క్లియర్ చేయబడింది)</option>
+                        <option value="Not Cleared">Fee Not Cleared (క్లియర్ కాలేదు)</option>
+                    </select>
+                    <button type="button" class="btn-add-item" onclick="addNewDropdownOption('feeClearedStatus')" title="Add option">+</button>
+                    <button type="button" onclick="saveFeeField('feeClearedStatus')" class="btn-success">Save</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="aadhaar">ID Number / [Aadhaar Redacted]</label>
+                <div class="form-row-inline">
+                    <input type="text" id="aadhaar" placeholder="Enter ID Number">
+                    <button type="button" onclick="saveExtraField('aadhaar')" class="btn-success">Save</button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="fullAddress">Full Resident Address (పూర్తి చిరునామా)</label>
+                <div class="form-row-inline">
+                    <input type="text" id="fullAddress" placeholder="Enter Full Address">
+                    <button type="button" onclick="saveExtraField('address')" class="btn-success">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-footer">
+            <span id="saveStatus" class="status-msg" aria-live="polite"></span>
+            <div style="display: flex; gap: 12px;">
+                <button type="button" class="btn-info" onclick="addNewStudent()" style="padding: 12px 20px; font-size: 15px;">➕ Create Additional Student</button>
+                <button type="submit" class="btn-success" style="padding: 12px 25px; font-size: 15px;">💾 Save All Changes</button>
+            </div>
+        </div>
+    </form>
+</main>
+
+<script>
+    let defaultStudents = [
+        { id: "JGS8001", name: "Kukkala Sushanitha", data: ["JGS8001", "Kukkala Sushanitha", "Telugu", "12-10-2005", "India", "Hindu", "SC", "Pulla Rao", "Kanthamani", "-", "Gowraram", "Coolie", "Mandal Parishad Primary School", "19-07-2013", "III", "Yes", "NO", "19-07-2013", "Yes", "A mole on the face", "EM", "-", "-", "-", "", "", "", ""], aadhaar: "", address: "Gowraram", totalFee: "5000", feeDue: "0", feePaid: "5000", balanceToBePaid: "0", feeClearedStatus: "Cleared", photo: "", certificates: [] },
+        { id: "JGS8002", name: "Yanam Varsha Siri", data: ["JGS8002", "Yanam Varsha Siri", "Telugu", "08-05-2004", "India", "Hindu", "ST", "Padma Babu", "Padma", "-", "Balakota gudem", "Pvt", "MPPS", "19-07-2013", "III", "Yes", "NO", "19-07-2013", "Yes", "A mole on the ankle", "EM", "-", "-", "-", "", "", "", ""], aadhaar: "", address: "Balakota gudem", totalFee: "5000", feeDue: "1000", feePaid: "4000", balanceToBePaid: "1000", feeClearedStatus: "Not Cleared", photo: "", certificates: [] }
+    ];
+
+    let studentsData = JSON.parse(localStorage.getItem("school_students")) || defaultStudents;
+    let selectedStudentOriginalId = ""; // Tracks currently loaded student ID to prevent creating duplicates on edit
+
+    window.onload = function() {
+        checkPasswordSetupState();
+        loadCustomDropdowns();
+        populateDropdown();
+        if(studentsData.length > 0) {
+            document.getElementById("studentSelect").value = studentsData[0].id;
+            loadStudentData();
+        }
+    };
+
+    function checkPasswordSetupState() {
+        let storedPass = localStorage.getItem("app_password");
+        if (!storedPass) {
+            document.getElementById("authModalTitle").textContent = "🔐 Create File Password";
+            document.getElementById("authModalDesc").textContent = "No password found. Please create a password to secure this register:";
+            document.getElementById("loginPasswordInput").placeholder = "Create new password";
+            document.getElementById("authModalBtn").textContent = "Save & Unlock";
+        }
+    }
+
+    function handleAuthAction() {
+        let storedPass = localStorage.getItem("app_password");
+        let inputVal = document.getElementById("loginPasswordInput").value;
+
+        if (!storedPass) {
+            if (!inputVal || inputVal.trim() === "") {
+                alert("Password cannot be blank.");
+                return;
+            }
+            localStorage.setItem("app_password", inputVal.trim());
+            alert("Password created and saved successfully!");
+            document.getElementById("authOverlay").style.display = "none";
+        } else {
+            if (inputVal === storedPass) {
+                document.getElementById("authOverlay").style.display = "none";
+            } else {
+                alert("Incorrect password! Please try again.");
+            }
+        }
+    }
+
+    function promptChangePassword() {
+        let currentPass = localStorage.getItem("app_password");
+        let oldInput = prompt("Enter current password:");
+        if (oldInput === currentPass) {
+            let newPass = prompt("Enter new password:");
+            if (newPass && newPass.trim() !== "") {
+                localStorage.setItem("app_password", newPass.trim());
+                alert("Password changed successfully!");
+            }
+        } else if (oldInput !== null) {
+            alert("Incorrect current password.");
+        }
+    }
+
+    function addNewDropdownOption(selectId) {
+        let val = prompt("Enter new option value to add:");
+        if (val && val.trim() !== "") {
+            let selectElem = document.getElementById(selectId);
+            let exists = Array.from(selectElem.options).some(opt => opt.value.toLowerCase() === val.trim().toLowerCase());
+            if (!exists) {
+                let opt = document.createElement("option");
+                opt.value = val.trim();
+                opt.textContent = val.trim();
+                selectElem.appendChild(opt);
+                selectElem.value = val.trim();
+
+                let customOpts = JSON.parse(localStorage.getItem("custom_dropdowns") || "{}");
+                if (!customOpts[selectId]) customOpts[selectId] = [];
+                customOpts[selectId].push(val.trim());
+                localStorage.setItem("custom_dropdowns", JSON.stringify(customOpts));
+
+                alert(`Successfully added "${val.trim()}" to the list!`);
+            } else {
+                alert("This option already exists in the dropdown.");
+                selectElem.value = val.trim();
+            }
+        }
+    }
+
+    function loadCustomDropdowns() {
+        let customOpts = JSON.parse(localStorage.getItem("custom_dropdowns") || "{}");
+        for (let selectId in customOpts) {
+            let selectElem = document.getElementById(selectId);
+            if (selectElem) {
+                customOpts[selectId].forEach(item => {
+                    let exists = Array.from(selectElem.options).some(opt => opt.value.toLowerCase() === item.toLowerCase());
+                    if (!exists) {
+                        let opt = document.createElement("option");
+                        opt.value = item;
+                        opt.textContent = item;
+                        selectElem.appendChild(opt);
+                    }
+                });
+            }
+        }
+    }
+
+    function populateDropdown(filter = "") {
+        const select = document.getElementById("studentSelect");
+        select.innerHTML = '<option value="">-- Choose Register No. & Name --</option>';
+        
+        studentsData.forEach(s => {
+            if(filter === "" || s.id.toLowerCase().includes(filter.toLowerCase()) || s.name.toLowerCase().includes(filter.toLowerCase())) {
+                let opt = document.createElement("option");
+                opt.value = s.id;
+                opt.textContent = `${s.id} — ${s.name}`;
+                select.appendChild(opt);
+            }
+        });
+    }
+
+    function filterStudents() {
+        let query = document.getElementById("searchInput").value;
+        populateDropdown(query);
+    }
+
+    function loadStudentData() {
+        const selectedId = document.getElementById("studentSelect").value;
+        if (!selectedId) return;
+        selectedStudentOriginalId = selectedId; // Lock target ID for updates
+        const student = studentsData.find(s => s.id === selectedId);
+        
+        if (student) {
+            for (let i = 1; i <= 28; i++) {
+                document.getElementById("f" + i).value = student.data[i - 1] || "";
+            }
+            document.getElementById("aadhaar").value = student.aadhaar || "";
+            document.getElementById("fullAddress").value = student.address || "";
+            document.getElementById("totalFee").value = student.totalFee || "";
+            document.getElementById("feeDue").value = student.feeDue || "";
+            document.getElementById("feePaid").value = student.feePaid || "";
+            document.getElementById("balanceToBePaid").value = student.balanceToBePaid || "";
+            document.getElementById("feeClearedStatus").value = student.feeClearedStatus || "";
+
+            renderStudentPhoto(student.photo);
+            renderCertificates(student.certificates || []);
+        }
+        document.getElementById("saveStatus").textContent = "";
+    }
+
+    let currentUploadedPhoto = "";
+    function handlePhotoUpload(event) {
+        let file = event.target.files[0];
+        if (!file) return;
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            currentUploadedPhoto = e.target.result;
+            renderStudentPhoto(currentUploadedPhoto);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function renderStudentPhoto(photoData) {
+        currentUploadedPhoto = photoData || "";
+        const container = document.getElementById("photoPreviewContainer");
+        if (currentUploadedPhoto) {
+            container.innerHTML = `<img src="${currentUploadedPhoto}" alt="Student Photo">`;
+        } else {
+            container.innerHTML = `<span style="font-size: 12px; color: #666; text-align: center;">No Photo</span>`;
+        }
+    }
+
+    function deleteStudentPhoto() {
+        currentUploadedPhoto = "";
+        renderStudentPhoto("");
+        savePhotoField();
+    }
+
+    function savePhotoField() {
+        const targetId = selectedStudentOriginalId || document.getElementById("f1").value;
+        if (!targetId) { alert("Select a student first."); return; }
+        let idx = studentsData.findIndex(s => s.id === targetId);
+        if (idx >= 0) {
+            studentsData[idx].photo = currentUploadedPhoto;
+            localStorage.setItem("school_students", JSON.stringify(studentsData));
+            document.getElementById("saveStatus").textContent = "✓ Photo Saved Successfully!";
+            setTimeout(() => document.getElementById("saveStatus").textContent = "", 2500);
+        } else {
+            alert("Please save the student record first.");
+        }
+    }
+
+    function addCertificate() {
+        const targetId = selectedStudentOriginalId || document.getElementById("f1").value;
+        if (!targetId) { alert("Please choose or save a student record first."); return; }
+        
+        let titleInput = document.getElementById("certTitle").value.trim();
+        let fileInput = document.getElementById("certFileInput").files[0];
+
+        if (!titleInput) { alert("Please enter a certificate title."); return; }
+        if (!fileInput) { alert("Please choose a file to upload."); return; }
+
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let fileData = e.target.result;
+            let idx = studentsData.findIndex(s => s.id === targetId);
+            if (idx >= 0) {
+                if (!studentsData[idx].certificates) studentsData[idx].certificates = [];
+                studentsData[idx].certificates.push({ title: titleInput, data: fileData });
+                localStorage.setItem("school_students", JSON.stringify(studentsData));
+                
+                document.getElementById("certTitle").value = "";
+                document.getElementById("certFileInput").value = "";
+                renderCertificates(studentsData[idx].certificates);
+                document.getElementById("saveStatus").textContent = "✓ Certificate Uploaded & Saved!";
+                setTimeout(() => document.getElementById("saveStatus").textContent = "", 2500);
+            }
+        };
+        reader.readAsDataURL(fileInput);
+    }
+
+    function renderCertificates(certs) {
+        let container = document.getElementById("certListContainer");
+        container.innerHTML = "";
+        if (!certs || certs.length === 0) {
+            container.innerHTML = `<span style="color: #666; font-size: 14px;">No certificates uploaded yet.</span>`;
+            return;
+        }
+        certs.forEach((cert, index) => {
+            let item = document.createElement("div");
+            item.className = "cert-item";
+            item.innerHTML = `
+                <span>📄 <strong>${cert.title}</strong></span>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn-info" onclick="viewCertificate('${cert.data}')" style="padding: 5px 10px; font-size: 13px;">View</button>
+                    <button type="button" class="btn-danger" onclick="deleteCertificate(${index})" style="padding: 5px 10px; font-size: 13px;">Delete</button>
+                </div>
+            `;
+            container.appendChild(item);
+        });
+    }
+
+    function viewCertificate(dataUrl) {
+        let win = window.open();
+        win.document.write(`<iframe src="${dataUrl}" frameborder="0" style="border:0; top:0; left:0; bottom:0; right:0; width:100%; height:100%;" allowfullscreen></iframe>`);
+    }
+
+    function deleteCertificate(index) {
+        const targetId = selectedStudentOriginalId || document.getElementById("f1").value;
+        let idx = studentsData.findIndex(s => s.id === targetId);
+        if (idx >= 0) {
+            studentsData[idx].certificates.splice(index, 1);
+            localStorage.setItem("school_students", JSON.stringify(studentsData));
+            renderCertificates(studentsData[idx].certificates);
+            document.getElementById("saveStatus").textContent = "✓ Certificate Deleted!";
+            setTimeout(() => document.getElementById("saveStatus").textContent = "", 2500);
+        }
+    }
+
+    function deleteCurrentStudent() {
+        const selectedId = document.getElementById("studentSelect").value;
+        if (!selectedId) {
+            alert("Please select a student from the dropdown to delete.");
+            return;
+        }
+        if (confirm(`Are you sure you want to delete student ID: ${selectedId}?`)) {
+            studentsData = studentsData.filter(s => s.id !== selectedId);
+            localStorage.setItem("school_students", JSON.stringify(studentsData));
+            selectedStudentOriginalId = "";
+            populateDropdown();
+            document.getElementById("studentForm").reset();
+            renderStudentPhoto("");
+            renderCertificates([]);
+            alert("Student deleted successfully.");
+        }
+    }
+
+    function calculateBalance() {
+        let total = parseFloat(document.getElementById("totalFee").value) || 0;
+        let paid = parseFloat(document.getElementById("feePaid").value) || 0;
+        let balance = total - paid;
+        document.getElementById("balanceToBePaid").value = balance >= 0 ? balance : 0;
+    }
+
+    function saveStudentData(event) {
+        event.preventDefault();
+        const newId = document.getElementById("f1").value.trim();
+        const currentName = document.getElementById("f2").value;
+        
+        if (!newId) {
+            alert("Register Number cannot be empty.");
+            return;
+        }
+
+        let updatedData = [];
+        for (let i = 1; i <= 28; i++) {
+            updatedData.push(document.getElementById("f" + i).value);
+        }
+
+        // Use selectedStudentOriginalId if it exists, otherwise fall back to checking if newId already exists
+        let targetId = selectedStudentOriginalId || newId;
+        let studentIndex = studentsData.findIndex(s => s.id === targetId);
+
+        // If the user changed the Register Number ID itself to an already existing ID elsewhere
+        if (selectedStudentOriginalId && selectedStudentOriginalId !== newId) {
+            let duplicateCheck = studentsData.findIndex(s => s.id === newId);
+            if (duplicateCheck >= 0) {
+                alert("Error: Another student already has this Register Number.");
+                return;
+            }
+        }
+
+        let existingCerts = studentIndex >= 0 ? studentsData[studentIndex].certificates : [];
+        let existingPhoto = studentIndex >= 0 ? studentsData[studentIndex].photo : currentUploadedPhoto;
+
+        let studentObj = {
+            id: newId,
+            name: currentName,
+            data: updatedData,
+            aadhaar: document.getElementById("aadhaar").value,
+            address: document.getElementById("fullAddress").value,
+            totalFee: document.getElementById("totalFee").value,
+            feeDue: document.getElementById("feeDue").value,
+            feePaid: document.getElementById("feePaid").value,
+            balanceToBePaid: document.getElementById("balanceToBePaid").value,
+            feeClearedStatus: document.getElementById("feeClearedStatus").value,
+            photo: existingPhoto,
+            certificates: existingCerts
+        };
+
+        if (studentIndex >= 0) {
+            studentsData[studentIndex] = studentObj;
+        } else {
+            studentsData.push(studentObj);
+        }
+
+        selectedStudentOriginalId = newId;
+        localStorage.setItem("school_students", JSON.stringify(studentsData));
+        populateDropdown();
+        document.getElementById("studentSelect").value = newId;
+        document.getElementById("saveStatus").textContent = "✓ Record Saved Successfully!";
+        setTimeout(() => document.getElementById("saveStatus").textContent = "", 3500);
+    }
+
+    function saveSingleField(fieldId, dataIndex) {
+        const targetId = selectedStudentOriginalId || document.getElementById("f1").value.trim();
+        if (!targetId) { alert("Please select or enter a Register Number first."); return; }
+        
+        let studentIndex = studentsData.findIndex(s => s.id === targetId);
+        let val = document.getElementById(fieldId).value;
+        let currentFormId = document.getElementById("f1").value.trim();
+
+        if (studentIndex >= 0) {
+            // Update existing record safely without duplicating
+            studentsData[studentIndex].data[dataIndex] = val;
+            if (fieldId === 'f2') studentsData[studentIndex].name = val;
+            if (fieldId === 'f1') {
+                studentsData[studentIndex].id = currentFormId;
+                selectedStudentOriginalId = currentFormId;
+            }
+        } else {
+            // Only create if it truly doesn't exist anywhere
+            let newData = new Array(28).fill("");
+            newData[dataIndex] = val;
+            studentsData.push({
+                id: currentFormId || "JGS_NEW", name: fieldId === 'f2' ? val : "New Student", data: newData,
+                aadhaar: "", address: "", totalFee: "", feeDue: "", feePaid: "", balanceToBePaid: "", feeClearedStatus: "", photo: "", certificates: []
+            });
+            selectedStudentOriginalId = currentFormId || "JGS_NEW";
+        }
+        localStorage.setItem("school_students", JSON.stringify(studentsData));
+        populateDropdown();
+        document.getElementById("studentSelect").value = selectedStudentOriginalId;
+        document.getElementById("saveStatus").textContent = `✓ ${fieldId.toUpperCase()} Saved!`;
+        setTimeout(() => document.getElementById("saveStatus").textContent = "", 2500);
+    }
+
+    function saveFeeField(fieldKey) {
+        const targetId = selectedStudentOriginalId || document.getElementById("f1").value.trim();
+        if (!targetId) { alert("Please enter a Register Number first."); return; }
+        let studentIndex = studentsData.findIndex(s => s.id === targetId);
+        let val = document.getElementById(fieldKey).value;
+
+        if (studentIndex >= 0) {
+            studentsData[studentIndex][fieldKey] = val;
+        } else {
+            alert("Please save general details or create the student first.");
+            return;
+        }
+        localStorage.setItem("school_students", JSON.stringify(studentsData));
+        document.getElementById("saveStatus").textContent = `✓ ${fieldKey} Saved!`;
+        setTimeout(() => document.getElementById("saveStatus").textContent = "", 2500);
+    }
+
+    function saveExtraField(propName) {
+        const targetId = selectedStudentOriginalId || document.getElementById("f1").value.trim();
+        if (!targetId) { alert("Please enter a Register Number first."); return; }
+        let studentIndex = studentsData.findIndex(s => s.id === targetId);
+        let val = document.getElementById(propName === 'aadhaar' ? 'aadhaar' : 'fullAddress').value;
+
+        if (studentIndex >= 0) {
+            studentsData[studentIndex][propName] = val;
+        }
+        localStorage.setItem("school_students", JSON.stringify(studentsData));
+        document.getElementById("saveStatus").textContent = `✓ ${propName} Saved!`;
+        setTimeout(() => document.getElementById("saveStatus").textContent = "", 2500);
+    }
+
+    function addNewStudent() {
+        let nextNum = 8001 + studentsData.length;
+        let newId = "JGS" + nextNum;
+        document.getElementById("studentForm").reset();
+        document.getElementById("f1").value = newId;
+        document.getElementById("f2").value = "New Student";
+        document.getElementById("studentSelect").value = "";
+        selectedStudentOriginalId = ""; // Reset tracker so it creates a new entry on save
+        renderStudentPhoto("");
+        renderCertificates([]);
+        document.getElementById("saveStatus").textContent = "Fill details and click 'Save All Changes' or individual 'Save' buttons.";
+    }
+
+    function nextStudent() {
+        const select = document.getElementById("studentSelect");
+        if (select.selectedIndex < select.options.length - 1) {
+            select.selectedIndex++;
+        } else {
+            select.selectedIndex = 1;
+        }
+        loadStudentData();
+    }
+
+    function prevStudent() {
+        const select = document.getElementById("studentSelect");
+        if (select.selectedIndex > 1) {
+            select.selectedIndex--;
+        } else {
+            select.selectedIndex = select.options.length - 1;
+        }
+        loadStudentData();
+    }
+
+    function backupData() {
+        let backupObj = {
+            password: localStorage.getItem("app_password") || "",
+            custom_dropdowns: JSON.parse(localStorage.getItem("custom_dropdowns") || "{}"),
+            students: studentsData
+        };
+        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupObj, null, 2));
+        let downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "school_database_backup.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    function importData(event) {
+        let file = event.target.files[0];
+        if (!file) return;
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                let imported = JSON.parse(e.target.result);
+                if (Array.isArray(imported)) {
+                    studentsData = imported;
+                } else if (imported.students) {
+                    studentsData = imported.students;
+                    if (imported.password) localStorage.setItem("app_password", imported.password);
+                    if (imported.custom_dropdowns) localStorage.setItem("custom_dropdowns", JSON.stringify(imported.custom_dropdowns));
+                }
+                localStorage.setItem("school_students", JSON.stringify(studentsData));
+                populateDropdown();
+                alert("Database imported and restored successfully!");
+            } catch(err) {
+                alert("Error reading JSON backup file.");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function exportExcel() {
+        let csvContent = "data:text/csv;charset=utf-8,";
+        studentsData.forEach(row => {
+            csvContent += row.data.join(",") + "\r\n";
+        });
+        let encodedUri = encodeURI(csvContent);
+        let link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "admissions_register.csv");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    }
+
+    function exportPDF() {
+        window.print();
+    }
+</script>
+
+</body>
+</html>
